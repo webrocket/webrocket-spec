@@ -1,0 +1,717 @@
+WFP - WebSockets Frontend Protocol
+==================================
+:author: Krzysztof Kowalik
+:email: chris@nu7hat.ch
+:revdate: December 2011
+:revnumber: 0.1
+:thisver:
+:latestpub:
+:latestdraft: http://rfc.webrocket.io/draft/WFP.html
+:status: Draft
+:webrocket: <<WR,WebRocket>>
+
+* *Latest Editor's Draft*: {latestdraft}
+* *Status*: {status}
+
+[abstract]
+Abstract
+--------
+The *WebSockets Frontend Protocol* (*WFP*) is a transport layer protocol
+for exchanging messages between Browsers and the Frontend WebSockets
+Server implemented by the {webrocket}.
+
+Language
+--------
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <<RFC2119, RFC 2119>>.
+
+Goals
+-----
+The purpose of the protocol is to allow for bidirectional, evented
+communication between Browsers and Frontend WebSockets Server over
+the <<WSP, WebSockets Protocol>> using the <<WSA, HTML5 WebSockets API>>.
+
+Generalized architecture
+------------------------
+The Frontend WebSockets Server handles communication with the Clients
+(Browsers) over the <<WSP, HTML5's WebSockets Protocol>>. Its endpoint
+is combined up of a number of parts:
+
+	[scheme]://[host]:[port]/[version]/[vhost]
+
+[horizontal]
+'scheme'::
+	Will be 'ws' for a normal connection and 'wss' for a secure.
+
+'host'::
+	There is bound the server.
+
+'port'::
+	The port to connect to.
+
+'version'::
+	The Frontend WebSockets Protocol version.
+
+'vhost'::
+	The virtual host to connect to.
+
+Events
+~~~~~~
+The protocol implemented by {webrocket} defines two kinds of events: 
+<<client-events, 'client'>> and <<server-events, 'server'>> specific.
+
+[[client-events]]
+Client Events
+-------------
+Two groups of 'client' specific events can be distinguished:
+
+'System events'::
+		Events triggered automatically by the Frontend WebSockets
+		Server. System event names MUST be prefixed with double
+		underscore (eg. '__connected').
+
+'Custom events'::
+		User-defined events triggered by Backend Applications or other
+		connected Clients.
+
+[[client-custom-event-format]]
+All client event messages MUST have the following <<JSON, JSON>>-encoded
+payload format:
+
+[source,js]
+------
+{		
+    "eventName": {
+        // ... parameters ...
+    }
+}
+------
+
+Event names as well as parameter keys SHOULD be defined as camel-cased
+strings, to keep compliance with the JavaScript coding style guidelines.
+
+IMPORTANT: The 'event-name' MUST be prefixed with double underscore for
+	the 'system' events, and SHALL NOT use such prefix for the 'custom'
+	user-defined events.
+
+Connection established
+~~~~~~~~~~~~~~~~~~~~~~
+When the connection is successfully established the Server sends an event
+to confirm that situation with the Client. Message's payload MUST contain
+unique identifier of the current session.
+
+.Format
+
+[source,js]
+-----
+{
+    "__connected": {
+        "sid": "session-id"
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'sid' [`string`]::
+	An unique identifier of the current session.
+
+[[client-succ-auth]]
+Successfull authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+When connected Client has been successfully <<server-auth,authenticated>>
+the Server sends an event to confirm that situation. Message's payload
+MUST contain name of the authenticated user and MAY contain additional
+information about the authenticated session.
+
+.Format
+
+[source,js]
+-----
+{
+    "__authenticated": {
+        "user": "joe"
+        // ...
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'user' [`string`]::
+	Name of the authenticated user.
+
+[[client-confirm-sub]]
+Confirmed subscription
+~~~~~~~~~~~~~~~~~~~~~~
+When connected Client has successfully <<server-subscribe,subscribed>>
+to the specified channel the Server sends an event to confirm that
+situation. Message's payload MUST contain the name of the subscribed
+channel.
+
+.Format
+
+[source,js]
+-----
+{
+    "__subscribed": {
+        "channel": "chat"
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	The name of the subscribed channel.
+
+[[client-confirm-priv-sub]]
+Private channel subscription
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If subscribed channel is a 'Private Channel' then message's payload MAY
+additionaly contain information about the Client permissions.
+
+.Format
+
+[source,js]
+-----
+{
+    "__subscribed": {
+        "channel": "chat",
+        "permission": 1
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	Name of the subscribed channel.
+
+'permission' [`int`]::
+	The numeric value of the client permissions.
+
+.Permissions
+Returned permission code MUST be logical disjunction of one or more
+possible values:
+
+[horizontal]
+*`1`* (READ)::
+	Read-only access.
+
+*`2`* (WRITE)::
+	Write-only access.
+
+*`4`* (OP)::
+	Special right, the channel operator.
+
+TODO: reference to access control document
+
+[[client-confirm-presence-sub]]
+Presence channel subscription
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The 'Presence channel' is a special kind of channel, which keeps track of
+all Clients subscribed on it and shares that information across all other
+subscribers. In that case, the message's payload MUST contain list of
+subscribers' records with session identifier. The subscribers' records
+MAY additionally contain custom data about related with particular
+subscriber.
+
+.Format
+
+[source,js]
+-----
+{
+    "__subscribed": {
+        "channel": "chat",
+        "subscribers": [
+            {
+                "sid": "session-id",
+                "data": {
+                    // ... custom information ...
+                }
+            },
+            // ...
+        ]
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	Name of the subscribed channel.
+
+'subscribers' [`array`]::
+	List of active subscribers (clients present on this channel).
+
+'subscribers.sid' [`string`]::
+	The client's session identifier.
+
+[[client-presence-activity]]
+Presence channel's subscribers acivity
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Subscribers activity on the presence channel SHALL be populated across
+all other subscribers using special events triggered when the Client
+joined and left the channel.
+
+On join
++++++++
+When new subscriber joined the presence channel the triggered event
+MUST contain the subscriber's session identifier, and MAY contain
+additional, custom information related to the subscriber. 
+
+.Format
+
+[source,js]
+-----
+{
+    "__heJoined": {
+        "sid": "session-id",
+        "data": {
+           // ... custom information ...
+        }
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'sid' [`string`]::
+	The Client's session identifier.
+
+'data' [`object`] optional::
+	The data passed by the client while starting a subscription.
+
+On leave
+++++++++
+When connected subscriber left a channel, the triggered event
+MUST contain the subscriber's session identifier.
+
+.Format
+
+[source,js]
+-----
+{
+    "__heLeft": {
+        "sid": "session-id"
+        "data": {
+           // ... custom information ...
+        }
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'sid' [`string`]::
+	The Client's session identifier.
+
+'data' [`object`] optional::
+	The data passsed by the Client while terminating a subscription.
+
+[[client-closed]]
+Closed connection confirmation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When the Client <<server-close,safely closes connection>> the Server
+MUST sends an confirmation message to the client. The confirmation
+message SHALL contain the identifier of the closed session.
+
+.Format
+
+[source,js]
+-----
+{
+    "__closed": {
+         "sid": "session-id"
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'sid' [`string`]::
+	The client's session identifier.
+
+[[client-error]]
+Error notification
+~~~~~~~~~~~~~~~~~~
+When problem encountered the Server MUST send apropriate, explicit
+information to concerned client. The message's payload MUST contain
+the numeric error code and short human readable explanation.
+
+.Format
+
+[source,js]
+-----
+{
+    "__error": {
+        "code": 402,
+        "status": "Unauthorized"
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'code' [`int`]::
+	The numeric error code. Status codes are inspired by the HTTP
+	error codes.
+
+'status' [`string`]::
+	Error status explanation. 
+
+[[server-events]]
+Server Events
+-------------
+The format of all server events implements the same <<JSON,JSON>>-encoded
+protocol as is implemented by the <<client-events,client events>>.
+
+[source,js]
+-----
+{
+    "eventName": {
+        // ... data ...
+    }
+}
+-----
+
+Parameters conventions and requirements are also the same as in
+the <<client-events,client events>> specification.
+
+[[server-auth]]
+Authentication
+~~~~~~~~~~~~~~
+When the Client wants to authenticate as a specified user, MUST send
+an authentication message with credentials. When authentication
+operation succeed an <<client-succ-auth,authentication confirmation
+event>> MUST be sent from the Server to this Client.
+
+.Format
+
+[source,js]
+-----
+{
+    "auth": {
+        "user": "joe",
+        "secret": "secret",
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'user' [`string`]::
+	Name of the user we want to be authenticated as.
+
+'secret' [`string`], optional::
+	The user's secret key.
+
+.Possible errors
+
+* <<err-bad-request,Bad request>>
+* <<err-unauth,Unauthorized>>
+
+[[server-subscribe]]
+Subscribing a channel
+~~~~~~~~~~~~~~~~~~~~~
+When the Client wants to subscribe to specified channel MUST send
+an subscription request message. When unsubscribe operation succeed
+an <<client-confirm-sub,subscription confirmation event>> MUST be
+sent from the Server to this Client.
+
+.Format
+
+[source,js]
+-----
+{
+    "subscribe": {
+        "channel": "chat",
+        "data": {
+            // ... user specific data ...    
+        }
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	Name of the channel we want to subscribe to.
+
+'data' [`object`] optional::
+	User specific information, used only by the presence channels.
+
+.Possible errors
+
+* <<err-bad-request,Bad request>>
+* <<err-forbidden,Forbidden>>
+* <<err-invalid-channel-name,Invalid channel name>>
+
+[[server-unsubscribe]]
+Unsubscribing a channel
+~~~~~~~~~~~~~~~~~~~~~~~
+When the client wants to unsubscribe specified channel, MUST send an
+unsubscription request message.
+
+.Format
+
+[source,js]
+-----
+{
+    "unsubscribe": {
+        "channel": "chat"
+        "data": {
+            // ... custom data ...
+        }
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	Name of the channel we want to subscribe to.
+
+'data' [`object`] optional::
+	User specific information, used only by the presence channels.
+	
+.Possible errors
+
+* <<err-bad-request,Bad request>>
+* <<err-forbidden,Forbidden>>
+* <<err-invalid-channel-name,Invalid channel name>>
+* <<err-not-subscribed,Not subscribed>>
+
+[[server-broadcast]]
+Broadcasting to the channel
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When the connected Client (subscriber) wants to broadcast information
+to all other subscribers of the specified channel, MUST send an broadcast
+request.
+
+.Format
+
+[source,js]
+-----
+{
+    "broadcast": {
+        "channel": "chat",
+        "event": "message",
+        "trigger": "chat/save_to_history",
+        "data": {
+            // ... broadcasted parameters ...
+        }
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	Name of the channel we want to subscribe to.
+
+'event' [`string`]::
+	This custom event will be triggered for all subscribers.
+
+'trigger' [`string`] optional::
+	Name of the Backend Application's event to be asynchronously triggered.
+
+'data' [`object`] optional::
+	The data to be passed to all subscribers.
+
+.Sequence
+
+* Client sends the 'broadcast' message
+* Server SHALL validate it and MUST resend it to all subscribers
+  of the specified channel.
+* Message MUST be re-composed to match the <<client-custom-event-format,
+  custom event message format>>
+* If the 'trigger' option is specified, server should trigger
+  apropriate event on the Backend Application.
+
+TODO: graph
+
+.Possible errors
+
+* <<err-bad-request,Bad request>>
+* <<err-forbidden,Forbidden>>
+* <<err-invalid-channel-name,Invalid channel name>>
+* <<err-invalid-event-name,Invalid event name>>
+* <<err-not-subscribed,Not subscribed>>
+* <<err-service-unavail,Service unavailable>>
+
+[[server-trigger]]
+Triggering the backend app's event
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When the connected Client wants to trigger a Backend Application's
+event MUST send a trigger message.
+
+.Format
+
+[source,js]
+-----
+{
+    "trigger": {
+        "event": "chat/save_and_broadcast",
+        "data": {
+            // ... passed parameters ...
+        }
+    }
+}
+-----
+
+.Sequence
+
+* Client sends the 'trigger' message
+* Server SHALL find free worker (Backend Application connection) using
+  load ballance algorightm and send the event message.
+* The event message MUST be contain the data passed by the 'trigger' payload. 
+
+TODO: add link to backend worker protocol here...
+TODO: graph
+
+If all connected workers are overloaded or there is no worker connected,
+server SHALL notify the client with the <<err-service-unavail,Service
+unavailable>> error message.
+
+TODO: graph
+
+.Parameters
+
+[horizontal]
+'event' [`string`]::
+	Name of the backend event we want to trigger.
+
+'data' [`object`]::
+	Hash with event parameters passed to the backend application.
+
+.Possible errors
+
+* <<err-bad-request,Bad request>>
+* <<err-forbidden,Forbidden>>
+* <<err-invalid-channel-name,Invalid channel name>>
+* <<err-service-unavail,Service unavailable>>
+
+[[server-close]]
+Safe closing connection
+~~~~~~~~~~~~~~~~~~~~~~~
+When the connected Client wants to safely close the connection, MUST
+send a close message.
+
+.Format
+
+[source,js]
+-----
+{
+    "close": {
+       // ... custom parameters ...
+    }
+}
+-----
+
+All custom data parameters SHOULD be automatially passed to all
+unsubscribed presence channels before closing the connection.
+
+.Sequence
+
+* Client sends the 'close' message
+* Server MUST answer with the '__closed' message and terminate
+  event loop for this particular connection.
+
+TODO: graph
+
+.Possible errors
+
+* <<err-bad-request,Bad request>>
+
+Errors
+------
+The {webrocket} error messages and codes are inspired by the
+<<HTTPCODES,HTTP status codes>>. Here's the full list of possible errors:
+
+[[err-bad-request]]
+.`400`: 'Bad request'
+
+The message sent by the client couldn't be understood due to
+malformed syntax. The client SHOULD NOT repeat the request
+without the modifications.
+
+[[err-unauth]]
+.`402`: 'Unauthorized'
+
+Returned when invalid credentials given - user doesn't exist
+in the system or secret key is not matching the specified user.
+
+[[err-forbidden]]
+.`403`: 'Forbidden'
+
+The server understood the request, but is refusing to fulfill it
+due to lack of user rights. The request SHOULD NOT be repeated
+until authenticate for as a different user or grant current user
+with required permissions.
+
+[[err-invalid-channel-name]]
+.`451`: 'Invalid channel name'
+
+Name of the channel specified in the payload is empty or contains
+invalid characters. The request SHOULD NOT be repeated without
+the channel name modifications.
+
+[[err-invalid-event-name]]
+.`452`: 'Invalid event name'
+
+Name of the triggered event specified in the payload contains
+invalid characters. The request SHOULD NOT be repeated without
+the triggered event name modifications.
+
+[[err-not-subscribed]]
+.`453`: 'Not subscribed'
+
+Channel is not subscribed by this client, so the operation on it
+can not be finished. The request SHOULD NOT be repeated.
+
+[[err-channel-not-found]]
+.`454`: 'Channel not found'
+
+Specified channel does not exist, so the operation on it can not
+be finished. The request SHOULD NOT be repeated until the channel
+will be created.
+
+[[err-service-unavail]]
+.`503`: 'Service unavailable'
+
+The server is currently unable to handle the request due to
+a temporary overloading or unpresence of the backend application
+workers. The request MAY be repeated after short time.
+
+References
+----------
+
+[bibliography]
+.Bibliography
+- [[[RFC2119]]] link:http://tools.ietf.org/html/rfc2119[Key words
+  for use in RFCs to Indicate Requirement] - S. Bradner, IETF
+- [[[WSP]]] link:http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol[
+  The WebSockets Protocol] - I. Fette, IETF
+- [[[WSA]]] link:http://dev.w3.org/html5/websockets/[The WebSockets
+  API] - I. Hickson, W3C
+- [[[JSON]]] link:http://www.ietf.org/rfc/rfc4627[JavaScript Object
+  Notation (JSON)] - D. Crockford, JSON.org
+- [[[HTTPCODES]]] link:http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html[
+  HTTP Status Code Definitions] - W3.org
+- [[[WR]]] link:{homepage}[WebRocket's Home Page] - webrocket.io

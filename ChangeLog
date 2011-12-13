@@ -1,0 +1,6 @@
+2011-12-13  Krzysztof Kowalik  <chris@nu7hat.ch>
+
+	* ./: extracted from the webrocket repository
+	* Makefile: distinguished targets for drafts and specs
+	* asciidoc.conf: added common configuration
+	* WFP.txt: finished first draft version
