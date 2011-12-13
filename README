@@ -29,7 +29,7 @@ To build whole specification, simply run the following command:
 
 	$ make
 
-Generated files will be found in the 'draft/' and 'spec/' folders.
+Generated files will be found in the 'www/draft/' and 'www/spec/' folders.
 
 Copyright
 ---------

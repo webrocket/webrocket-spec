@@ -8,8 +8,8 @@ all: drafts
 clean: clean-drafts
 
 drafts: $(DRAFTS)
-	mkdir -p draft
-	mv $(DRAFTS) draft/
+	mkdir -p www/draft
+	mv $(DRAFTS) www/draft/
 
 clean-drafts:
 	rm -f draft/*
