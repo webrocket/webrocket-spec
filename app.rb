@@ -9,5 +9,5 @@ get '/' do
 end
 
 get '/*.html' do |path|
-  File.read(File.join(settings.root, path + ".html"))
+  File.read(File.join(settings.public_folder, path + ".html"))
 end
