@@ -1,11 +1,11 @@
 .highlight  { background: trasparent; }
-.highlight .c { font-style: italic; color: rgba(255,255,255,0.4); } /* Comment */
+.highlight .c { font-style: italic; color: rgba(255,255,255,0.7); } /* Comment */
 .highlight .err { border: 1px solid #FF0000 } /* Error */
 .highlight .k { font-weight: bold } /* Keyword */
-.highlight .cm { font-style: italic; color: rgba(255,255,255,0.5); } /* Comment.Multiline */
-.highlight .c1 { font-style: italic; color: rgba(255,255,255,0.5); } /* Comment.Single */
-.highlight .cs { font-style: italic; color: rgba(255,255,255,0.5); } /* Comment.Special */
-.highlight .ge { font-style: italic; color: rgba(255,255,255,0.5); } /* Generic.Emph */
+.highlight .cm { font-style: italic; color: rgba(255,255,255,0.7); } /* Comment.Multiline */
+.highlight .c1 { font-style: italic; color: rgba(255,255,255,0.7); } /* Comment.Single */
+.highlight .cs { font-style: italic; color: rgba(255,255,255,0.7); } /* Comment.Special */
+.highlight .ge { font-style: italic; } /* Generic.Emph */
 .highlight .gh { font-weight: bold } /* Generic.Heading */
 .highlight .gp { font-weight: bold } /* Generic.Prompt */
 .highlight .gs { font-weight: bold } /* Generic.Strong */

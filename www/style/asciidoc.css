@@ -6,7 +6,7 @@ body {
    color: rgba(255,255,255,0.7);
    overflow-x: hidden;
    margin: 1em 0 1em 2em;
-   margin-top: 8.5em;
+   margin-top: 8em;
    width: 760px;
 }
 
@@ -60,12 +60,12 @@ div.title {
    z-index: 300;
    top: 0;
    left: 0;
-   margin-top: 1em;
    width: 100%;
    text-align: left;
    background: #DB4D44;
-   padding: 0.5em 2em;
+   padding: 0.5em 2em 1em 2em;
    box-shadow: -6px 6px 0 rgba(255,255,255,0.1);
+   color: #FFF;
 }
 
 #header h1 {
@@ -80,6 +80,7 @@ div.title {
 #email, #author, #revnumber, #revdate {
    display: inline-block;
    font-size: 90%;
+   color: #FFF;
 }
 
 #email:after {
@@ -176,12 +177,12 @@ div.ulist ul li p, div.olist ol li p {
 
 pre {
    font-family: "Droid Sans Mono", monospace;
-   background: rgba(255,255,255,0.2);
-   box-shadow: -6px 6px 0 rgba(255,255,255,0.1);
+   background: rgba(0,0,0,0.3);
+   box-shadow: -6px 6px 0 rgba(0,0,0,0.08);
    color: rgba(255,255,255,0.9);
    padding: 6px 10px;
    margin: 1em 0 2em 0;
-   font-size: 90%;
+   font-size: 95%;
 }
 
 table {
@@ -199,7 +200,13 @@ table {
 }
 
 .admonitionblock {
-   background: rgba(0,0,0,0.2);
+   background: #DDAA00;
+   color: rgba(20,20,5,0.5);
+   box-shadow: -6px 6px 0 rgba(0,0,0,0.08);
+}
+
+.admonitionblock em, .admonitionblock strong {
+   color: rgba(20,20,5,1);
 }
 
 .admonitionblock .content {

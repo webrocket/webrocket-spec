@@ -196,22 +196,6 @@ additionaly contain information about the Client permissions.
 'permission' [`int`]::
 	The numeric value of the client permissions.
 
-.Permissions
-Returned permission code MUST be logical disjunction of one or more
-possible values:
-
-[horizontal]
-*`1`* (READ)::
-	Read-only access.
-
-*`2`* (WRITE)::
-	Write-only access.
-
-*`4`* (OP)::
-	Special right, the channel operator.
-
-TODO: reference to access control document
-
 [[client-confirm-presence-sub]]
 Presence channel subscription
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

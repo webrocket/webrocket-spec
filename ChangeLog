@@ -1,6 +1,15 @@
+2011-12-14  Krzysztof Kowalik  <chris@nu7hat.ch>
+
+	* Makefile: updated targets
+	* src: specs source files moved there
+	* src/WFP.txt: fixed typos and found bugs
+
 2011-12-13  Krzysztof Kowalik  <chris@nu7hat.ch>
 
 	* ./: extracted from the webrocket repository
 	* Makefile: distinguished targets for drafts and specs
 	* asciidoc.conf: added common configuration
 	* WFP.txt: finished first draft version
+	* app.rb: created sinatra app for heroku
+	* config.ru: heroku stuff
+	* Gemfile: heroku stuff
