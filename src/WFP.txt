@@ -62,14 +62,14 @@ The protocol implemented by {webrocket} defines two kinds of events:
 <<client-events, 'client'>> and <<server-events, 'server'>> specific.
 
 [[client-events]]
-Client Events
--------------
+Client Events (WebRocket -> Cient)
+----------------------------------
 Two groups of 'client' specific events can be distinguished:
 
 'System events'::
 		Events triggered automatically by the Frontend WebSockets
-		Server. System event names MUST be prefixed with double
-		underscore (eg. '__connected').
+		Server and sent to the Client. System event names MUST be
+		prefixed with double underscore (eg. '__connected').
 
 'Custom events'::
 		User-defined events triggered by Backend Applications or other
@@ -245,6 +245,7 @@ Subscribers activity on the presence channel SHALL be populated across
 all other subscribers using special events triggered when the Client
 joined and left the channel.
 
+[[client-onjoin]]
 On join
 +++++++
 When new subscriber joined the presence channel the triggered event
@@ -274,6 +275,7 @@ additional, custom information related to the subscriber.
 'data' [`object`] optional::
 	The data passed by the client while starting a subscription.
 
+[[client-onleave]]
 On leave
 ++++++++
 When connected subscriber left a channel, the triggered event
@@ -356,8 +358,8 @@ the numeric error code and short human readable explanation.
 	Error status explanation. 
 
 [[server-events]]
-Server Events
--------------
+Server Events (Client -> WebRocket)
+-----------------------------------
 The format of all server events implements the same <<JSON,JSON>>-encoded
 protocol as is implemented by the <<client-events,client events>>.
 
@@ -402,6 +404,13 @@ event>> MUST be sent from the Server to this Client.
 'secret' [`string`], optional::
 	The user's secret key.
 
+.Sequence
+
+* Client sends the 'authenticate' message
+* Server MUST validate it and authenticate the session
+* Server MUST notify a Client about successfull authentication
+  with the <<client-succ-auth,'__authenticated'>> event.
+	
 .Possible errors
 
 * <<err-bad-request,Bad request>>
@@ -438,6 +447,15 @@ sent from the Server to this Client.
 'data' [`object`] optional::
 	User specific information, used only by the presence channels.
 
+.Sequence
+
+* Client sends the 'subscribe' message
+* Server MUST validate and store specified subscription
+* If subscribing a Presence Channel, then all other subscribers
+  SHALL get notified with the <<client-onjoin,'__heJoined'>> event.
+* Server MUST notify a Client about successfull subscription
+  with the <<client-confirm-sub,'__subscribed'>> event.
+	
 .Possible errors
 
 * <<err-bad-request,Bad request>>
@@ -472,7 +490,14 @@ unsubscription request message.
 
 'data' [`object`] optional::
 	User specific information, used only by the presence channels.
-	
+
+.Sequence
+
+* Client sends the 'unsubscribe' message
+* Server MUST validate and remove specified subscription
+* If unsubscribing a Presence Channel, then all other subscribers
+  SHALL get notified with the <<client-onleft,'__heLeft'>> event.
+
 .Possible errors
 
 * <<err-bad-request,Bad request>>
@@ -525,10 +550,8 @@ request.
   of the specified channel.
 * Message MUST be re-composed to match the <<client-custom-event-format,
   custom event message format>>
-* If the 'trigger' option is specified, server should trigger
-  apropriate event on the Backend Application.
-
-TODO: graph
+* If the 'trigger' option is specified, server SHOULD trigger
+  specified event on the Backend Application.
 
 .Possible errors
 
@@ -563,17 +586,11 @@ event MUST send a trigger message.
 
 * Client sends the 'trigger' message
 * Server SHALL find free worker (Backend Application connection) using
-  load ballance algorightm and send the event message.
-* The event message MUST be contain the data passed by the 'trigger' payload. 
-
-TODO: add link to backend worker protocol here...
-TODO: graph
-
-If all connected workers are overloaded or there is no worker connected,
-server SHALL notify the client with the <<err-service-unavail,Service
-unavailable>> error message.
-
-TODO: graph
+  load ballance algorightm and send the event message
+* Server SHALL send a validated and re-composed message to the Worker
+* If all connected workers are overloaded or there is no worker connected,
+  Server SHALL notify the client with the <<err-service-unavail,Service
+  unavailable>> error message.
 
 .Parameters
 
@@ -614,10 +631,8 @@ unsubscribed presence channels before closing the connection.
 .Sequence
 
 * Client sends the 'close' message
-* Server MUST answer with the '__closed' message and terminate
-  event loop for this particular connection.
-
-TODO: graph
+* Server MUST terminate event loop for this particular connection.
+* Server MUST answer with the <<client-closed,'__closed'>> message
 
 .Possible errors
 
