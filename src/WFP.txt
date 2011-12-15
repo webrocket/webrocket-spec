@@ -88,8 +88,8 @@ payload format:
 }
 ------
 
-Event names as well as parameter keys SHOULD be defined as camel-cased
-strings, to keep compliance with the JavaScript coding style guidelines.
+Parameter keys SHOULD be defined as camel-cased strings, to keep
+compliance with the JavaScript coding style guidelines.
 
 IMPORTANT: The 'event-name' MUST be prefixed with double underscore for
 	the 'system' events, and SHALL NOT use such prefix for the 'custom'
