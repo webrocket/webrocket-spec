@@ -257,7 +257,7 @@ additional, custom information related to the subscriber.
 [source,js]
 -----
 {
-    "__heJoined": {
+    "__memberJoined": {
         "sid": "session-id",
         "data": {
            // ... custom information ...
@@ -286,7 +286,7 @@ MUST contain the subscriber's session identifier.
 [source,js]
 -----
 {
-    "__heLeft": {
+    "__memberLeft": {
         "sid": "session-id"
         "data": {
            // ... custom information ...

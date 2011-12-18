@@ -1,3 +1,7 @@
+2011-12-18  Krzysztof Kowalik  <chris@nu7hat.ch>
+
+	* src/WFP.txt: __heLeft, __heJoined changed to __memberLeft, __memberJoined
+
 2011-12-14  Krzysztof Kowalik  <chris@nu7hat.ch>
 
 	* Makefile: updated targets
