@@ -15,13 +15,13 @@ Documentation and man pages generator
 TIP: If you're happy user of shitty OSX, in case to make the 'asciidoc'
 work properly you have to register the installed docbook.
 
-	brew install docbook asciidoc
-	sudo docbook-register
+	$ brew install docbook asciidoc
+	$ sudo docbook-register
 
 On any other normal Linux/Unix distribution it's enough to just
 install deps with your favorite package manager:
 
-	sudo apt-get install docbook asciidoc
+	$ sudo apt-get install docbook asciidoc
 
 Building instructions
 ---------------------
