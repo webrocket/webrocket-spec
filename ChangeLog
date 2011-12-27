@@ -1,5 +1,10 @@
 2011-12-27  Krzysztof Kowalik  <chris@nu7hat.ch>
 
+	* src/BWP.txt: protocol descriptions
+	* www/style/asciidoc.css: fixed styles
+
+2011-12-26  Krzysztof Kowalik  <chris@nu7hat.ch>
+
 	* src/WFP.txt: protocol improvements, added __ping and pong, fixed error codes
 
 2011-12-18  Krzysztof Kowalik  <chris@nu7hat.ch>
