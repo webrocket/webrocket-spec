@@ -10,11 +10,11 @@ body {
    width: 760px;
 }
 
-a {
+a, a * {
    color: #FFF;
    text-decoration: underline;
 }
-a:hover {
+a:hover, a:hover * {
    text-decoration: none;
    color: #F7DF9F;
 }
@@ -130,6 +130,7 @@ dt.hdlist1.strong, td.hdlist1.strong {
 td.hdlist1, dt.hdlist1 {
    vertical-align: top;
    font-style: normal;
+   padding: 0.2em 0;
    padding-right: 0.8em;
    color: rgba(255,255,255,0.);
 }
@@ -201,7 +202,7 @@ table {
 
 .admonitionblock {
    background: #DDAA00;
-   color: rgba(20,20,5,0.5);
+   color: rgba(20,20,5,0.8);
    box-shadow: -6px 6px 0 rgba(0,0,0,0.08);
 }
 

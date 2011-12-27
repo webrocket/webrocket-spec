@@ -2,7 +2,8 @@ ASCIIDOC = asciidoc
 ASCIIDOC_OPTS = -b html5 -d article -f ./asciidoc.conf
 
 DRAFTS = \
-	src/WFP.html
+	src/WFP.html \
+	src/BWP.html
 
 all: drafts
 clean: clean-drafts

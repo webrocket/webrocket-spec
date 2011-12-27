@@ -1,6 +1,15 @@
+2011-12-27  Krzysztof Kowalik  <chris@nu7hat.ch>
+
+	* src/WFP.txt: protocol improvements, added __ping and pong, fixed error codes
+
 2011-12-18  Krzysztof Kowalik  <chris@nu7hat.ch>
 
 	* src/WFP.txt: __heLeft, __heJoined changed to __memberLeft, __memberJoined
+
+2011-12-15  Krzysztof Kowalik  <chris@nu7hat.ch>
+
+	* src/WFP.txt: fixed param keys description
+	* src/BWP.txt: created, written bunch of information
 
 2011-12-14  Krzysztof Kowalik  <chris@nu7hat.ch>
 

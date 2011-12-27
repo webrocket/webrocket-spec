@@ -1,0 +1,157 @@
+BWP - Backend Workers Protocol
+==============================
+:author: Krzysztof Kowalik
+:email: chris@nu7hat.ch
+:revdate: December 2011
+:revnumber: 0.1
+:thisver:
+:latestpub:
+:latestdraft: http://rfc.webrocket.io/draft/BWP.html
+:status: Draft
+:webrocket: <<WR,WebRocket>>
+
+* *Latest Editor's Draft*: {latestdraft}
+* *Status*: {status}
+
+[abstract]
+Abstract
+--------
+The *Backend Workers Protocol* (*BWP*) is a transport layer protocol
+for exchanging messages between Server-side Web Applications or Workers
+and the Tasks Queue implemented by the {webrocket}.
+
+Language
+--------
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <<RFC2119, RFC 2119>>.
+
+Goals
+-----
+The purpose of the protocol is to allow for bidirectional, evented
+communication between Server-side Web Applications and {webrocket}
+Tasks Queue over the <<TCP,TCP protocol>> using <<ZEROMQ,ZeroMQ>>
+components.  
+
+Generalized architecture
+------------------------
+The Backend Workers Protocol is <<JSON, JSON>>-encoded text protocol
+designed for rapid exchanging tasks with the Server-side Web
+Applications or Workers.
+
+Components
+~~~~~~~~~~
+Communication happens over the <<TCP,TCP protocol>> using
+<<ZEROMQ,ZeroMQ>> components. {webrocket}'s Tasks Queue serves data
+bidirectionaly using the <<ZMQSOCKET,'ROUTER' socket>>. The Client
+MUST handle connection with the server using the <<ZMQSOCKET,
+'DEALER' socket>>.
+
+Endpoint
+~~~~~~~~
+To simplify configuration for the end users, client libraries MAY use
+a particular URI to connect to the server:	 
+
+	[scheme]://[user]:[secret]@[host]:[port]/[vhost]
+
+[horizontal]
+'scheme'::
+	Will be 'wr' for a normal connection and 'wrs' for a secure.
+
+'user'::
+	Name of the user to authenticate as.
+
+'secret'::
+	Secret key belonging to the specified user.
+
+'host'::
+	There is bound the server.
+
+'port'::
+	The port to connect to.
+
+'version'::
+	The Frontend WebSockets Protocol version.
+
+'vhost'::
+	The virtual host to connect to.
+
+.Example
+
+	wr://joe:secret@webrocket.io/echo
+	
+IMPORTANT: The 'user', 'password' parameters as well as 'vhost'
+	SHOULD NOT be passed directly in the URI while performing the
+	connection, but extracted and used for authentication using
+	particular protocol calls.
+
+Authentication
+~~~~~~~~~~~~~~
+Not authenticated Clients SHALL NOT be able to perform any operation
+on the server. The authentication MUST be synchromous, initialized by
+the server with <<client-auth-required,authentication required event>>.
+The Client's event loop MUST be blocked until successfull
+authentication will be performed. The Client MUST answer for the
+authentication request with valid vhost-related credentials in the
+<<server-auth,authentication event>>'s payload.
+
+The client SHOULD be authenticated for the session time (until
+connection will terminate) when using normal connection. When
+connection gets lost Server MUST re-authenticate the Client after
+his reconnect.
+
+If secured connection is used, Client SHOULD be authenticated
+temporarily by exchanging key with particular expiration date. When
+exchanged key expires Server MUST re-authenticate the Client. Also,
+the same as normal connections does, when connection gets lost 
+Server MUST revalidate the Client after his reconnect.
+
+Events
+~~~~~~
+The protocol implemented by {webrocket} defines two kinds of events: 
+<<client-events, 'client'>> and <<server-events, 'server'>> specific.
+
+[[client-events]]
+Client Events (WebRocket -> Client)
+----------------------------------
+Two groups of 'client' specific events can be distinguished:
+
+'System events'::
+		Events triggered automatically by the Tasks Queue Server and
+		sent to the Client. System event names MUST be 	prefixed with
+		double underscore (eg. '__connected').
+
+'Custom events'::
+		User-defined events requested by the Frontend Clients (Browsers).
+
+[[client-custom-event-format]]
+All client event messages MUST have the following <<JSON,JSON>>-encoded
+payload format:
+
+[source,js]
+------
+{		
+    "eventName": {
+        // ... parameters ...
+    }
+}
+------
+
+IMPORTANT: The 'event-name' MUST be prefixed with double underscore for
+	the 'system' events, and SHALL NOT use such prefix for the 'custom'
+	user-defined events.
+		
+References
+----------
+[bibliography]
+.Bibliography
+- [[[RFC2119]]] link:http://tools.ietf.org/html/rfc2119[Key words
+  for use in RFCs to Indicate Requirement] - S. Bradner, IETF
+- [[[TCP]]] link:http://www.ietf.org/rfc/rfc793.txt[Transmission
+  Control Protocol] - J. Postel, IETF
+- [[[JSON]]] link:http://www.ietf.org/rfc/rfc4627[JavaScript Object
+  Notation (JSON)] - D. Crockford, JSON.org
+- [[[WR]]] link:{homepage}[WebRocket's Home Page] - webrocket.io
+- [[[ZEROMQ]]] link:http://zeromq.org[ZeroMQ's Home Page] - zeromq.org
+- [[[ZMQSOCKET]]] link:http://api.zeromq.org/2-1:zmq-socket[zmq_socket
+  Manual Page] - api.zeromq.org

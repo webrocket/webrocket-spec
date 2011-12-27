@@ -38,7 +38,7 @@ The Frontend WebSockets Server handles communication with the Clients
 (Browsers) over the <<WSP, HTML5's WebSockets Protocol>>. Its endpoint
 is combined up of a number of parts:
 
-	[scheme]://[host]:[port]/[version]/[vhost]
+	[scheme]://[host]:[port]/[vhost]
 
 [horizontal]
 'scheme'::
@@ -50,12 +50,13 @@ is combined up of a number of parts:
 'port'::
 	The port to connect to.
 
-'version'::
-	The Frontend WebSockets Protocol version.
-
 'vhost'::
 	The virtual host to connect to.
 
+.Example
+
+	ws://webrocket.io/echo
+	
 Events
 ~~~~~~
 The protocol implemented by {webrocket} defines two kinds of events: 
@@ -64,17 +65,6 @@ The protocol implemented by {webrocket} defines two kinds of events:
 [[client-events]]
 Client Events (WebRocket -> Cient)
 ----------------------------------
-Two groups of 'client' specific events can be distinguished:
-
-'System events'::
-		Events triggered automatically by the Frontend WebSockets
-		Server and sent to the Client. System event names MUST be
-		prefixed with double underscore (eg. '__connected').
-
-'Custom events'::
-		User-defined events triggered by Backend Applications or other
-		connected Clients.
-
 [[client-custom-event-format]]
 All client event messages MUST have the following <<JSON, JSON>>-encoded
 payload format:
@@ -90,6 +80,18 @@ payload format:
 
 Parameter keys SHOULD be defined as camel-cased strings, to keep
 compliance with the JavaScript coding style guidelines.
+
+Two groups of 'client' specific events can be distinguished:
+
+'System events'::
+		Events triggered automatically by the Frontend WebSockets
+		Server and sent to the Client. System event names MUST be
+		prefixed with double underscore (eg. '__connected').
+
+'Custom events'::
+		User-defined events triggered by Backend Applications or other
+		connected Clients. Custom events always contains the `channel`
+		parameter in its payload.
 
 IMPORTANT: The 'event-name' MUST be prefixed with double underscore for
 	the 'system' events, and SHALL NOT use such prefix for the 'custom'
@@ -123,26 +125,16 @@ Successfull authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 When connected Client has been successfully <<server-auth,authenticated>>
 the Server sends an event to confirm that situation. Message's payload
-MUST contain name of the authenticated user and MAY contain additional
-information about the authenticated session.
+ MAY contain additional information about the authenticated session.
 
 .Format
 
 [source,js]
 -----
 {
-    "__authenticated": {
-        "user": "joe"
-        // ...
-    }
+    "__authenticated": {}
 }
 -----
-
-.Parameters
-
-[horizontal]
-'user' [`string`]::
-	Name of the authenticated user.
 
 [[client-confirm-sub]]
 Confirmed subscription
@@ -236,7 +228,7 @@ subscriber.
 	List of active subscribers (clients present on this channel).
 
 'subscribers.sid' [`string`]::
-	The client's session identifier.
+	The Client's session identifier.
 
 [[client-presence-activity]]
 Presence channel's subscribers acivity
@@ -304,6 +296,48 @@ MUST contain the subscriber's session identifier.
 'data' [`object`] optional::
 	The data passsed by the Client while terminating a subscription.
 
+[[client-confirm-unsub]]
+Confirmed unsubscription
+~~~~~~~~~~~~~~~~~~~~~~~~
+When connected Client has successfully <<server-unsubscribe,unusubscribed>>
+from the specified channel the Server sends an event to confirm that
+situation. Message's payload MUST contain the name of the unsubscribed
+channel.
+
+.Format
+
+[source,js]
+-----
+{
+    "__unsubscribed": {
+        "channel": "chat"
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'channel' [`string`]::
+	The name of the unsubscribed channel.
+
+[[client-heartbeat]]
+Heartbeat
+~~~~~~~~~
+Server periodically sends a heartbeat message to ensure that the
+Client is still connected and ready to receive the message. The
+Client SHALL immedietely respond with the <<server-pong,pong>>
+message.
+
+.Format
+
+[source,js]
+----
+{
+    "__ping": {}
+}
+----
+
 [[client-closed]]
 Closed connection confirmation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -326,7 +360,7 @@ message SHALL contain the identifier of the closed session.
 
 [horizontal]
 'sid' [`string`]::
-	The client's session identifier.
+	The Client's session identifier.
 
 [[client-error]]
 Error notification
@@ -378,10 +412,10 @@ the <<client-events,client events>> specification.
 [[server-auth]]
 Authentication
 ~~~~~~~~~~~~~~
-When the Client wants to authenticate as a specified user, MUST send
-an authentication message with credentials. When authentication
-operation succeed an <<client-succ-auth,authentication confirmation
-event>> MUST be sent from the Server to this Client.
+When the Client wants to authenticate using a single access token,
+MUST send an authentication message. When authentication operation
+succeed an <<client-succ-auth,authentication confirmation event>>
+MUST be sent from the Server to this Client.
 
 .Format
 
@@ -389,8 +423,7 @@ event>> MUST be sent from the Server to this Client.
 -----
 {
     "auth": {
-        "user": "joe",
-        "secret": "secret",
+        "token": "...",
     }
 }
 -----
@@ -398,11 +431,8 @@ event>> MUST be sent from the Server to this Client.
 .Parameters
 
 [horizontal]
-'user' [`string`]::
-	Name of the user we want to be authenticated as.
-
-'secret' [`string`], optional::
-	The user's secret key.
+'token' [`string`]::
+	A *Single Access Token* obtained by the Backend Worker.
 
 .Sequence
 
@@ -420,7 +450,7 @@ event>> MUST be sent from the Server to this Client.
 Subscribing a channel
 ~~~~~~~~~~~~~~~~~~~~~
 When the Client wants to subscribe to specified channel MUST send
-an subscription request message. When unsubscribe operation succeed
+an subscription request message. When subscribe operation succeed
 an <<client-confirm-sub,subscription confirmation event>> MUST be
 sent from the Server to this Client.
 
@@ -460,13 +490,15 @@ sent from the Server to this Client.
 
 * <<err-bad-request,Bad request>>
 * <<err-forbidden,Forbidden>>
-* <<err-invalid-channel-name,Invalid channel name>>
+* <<err-channel-not-found,Channel not found>>
 
 [[server-unsubscribe]]
 Unsubscribing a channel
 ~~~~~~~~~~~~~~~~~~~~~~~
 When the client wants to unsubscribe specified channel, MUST send an
-unsubscription request message.
+unsubscription request message. When unsubscribe operation succeed
+an <<client-confirm-unsub,unsubscription confirmation event>> MUST be
+sent from the Server to this Client.
 
 .Format
 
@@ -502,7 +534,7 @@ unsubscription request message.
 
 * <<err-bad-request,Bad request>>
 * <<err-forbidden,Forbidden>>
-* <<err-invalid-channel-name,Invalid channel name>>
+* <<err-channel-not-found,Channel not found>>
 * <<err-not-subscribed,Not subscribed>>
 
 [[server-broadcast]]
@@ -557,8 +589,7 @@ request.
 
 * <<err-bad-request,Bad request>>
 * <<err-forbidden,Forbidden>>
-* <<err-invalid-channel-name,Invalid channel name>>
-* <<err-invalid-event-name,Invalid event name>>
+* <<err-channel-not-found,Channel not found>>
 * <<err-not-subscribed,Not subscribed>>
 * <<err-service-unavail,Service unavailable>>
 
@@ -605,8 +636,39 @@ event MUST send a trigger message.
 
 * <<err-bad-request,Bad request>>
 * <<err-forbidden,Forbidden>>
-* <<err-invalid-channel-name,Invalid channel name>>
 * <<err-service-unavail,Service unavailable>>
+
+[[server-pong]]
+Heartbeat
+~~~~~~~~~
+When the Server requested <<client-heartbeat,heartbeat>> information
+then the Client responds with the 'pong' message.
+
+.Format
+
+[source,js]
+-----
+{
+    "pong": {
+        "sid": "..."
+    }
+}
+-----
+
+.Parameters
+
+[horizontal]
+'sid' [`string`]::
+	The Client's session identifier.
+
+.Sequence
+
+* Server sends the '__ping' message
+* Client MUST answer with the 'pong' message as soon as possible
+
+.Possible errors
+
+* <<err-bad-request,Bad request>>
 
 [[server-close]]
 Safe closing connection
@@ -664,19 +726,11 @@ due to lack of user rights. The request SHOULD NOT be repeated
 until authenticate for as a different user or grant current user
 with required permissions.
 
-[[err-invalid-channel-name]]
 .`451`: 'Invalid channel name'
 
 Name of the channel specified in the payload is empty or contains
 invalid characters. The request SHOULD NOT be repeated without
 the channel name modifications.
-
-[[err-invalid-event-name]]
-.`452`: 'Invalid event name'
-
-Name of the triggered event specified in the payload contains
-invalid characters. The request SHOULD NOT be repeated without
-the triggered event name modifications.
 
 [[err-not-subscribed]]
 .`453`: 'Not subscribed'
@@ -700,7 +754,6 @@ workers. The request MAY be repeated after short time.
 
 References
 ----------
-
 [bibliography]
 .Bibliography
 - [[[RFC2119]]] link:http://tools.ietf.org/html/rfc2119[Key words
