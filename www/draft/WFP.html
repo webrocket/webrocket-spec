@@ -70,7 +70,7 @@ the <a href="#WSP">WebSockets Protocol</a> using the <a href="#WSA">HTML5 WebSoc
 is combined up of a number of parts:</p></div>
 <div class="literalblock">
 <div class="content monospaced">
-<pre>[scheme]://[host]:[port]/[version]/[vhost]</pre>
+<pre>[scheme]://[host]:[port]/[vhost]</pre>
 </div></div>
 <div class="hdlist"><table>
 <tr>
@@ -108,17 +108,6 @@ is combined up of a number of parts:</p></div>
 </tr>
 <tr>
 <td class="hdlist1">
-<em>version</em>
-<br>
-</td>
-<td class="hdlist2">
-<p style="margin-top: 0;">
-        The Frontend WebSockets Protocol version.
-</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
 <em>vhost</em>
 <br>
 </td>
@@ -129,6 +118,11 @@ is combined up of a number of parts:</p></div>
 </td>
 </tr>
 </table></div>
+<div class="literalblock">
+<div class="title">Example</div>
+<div class="content monospaced">
+<pre>ws://webrocket.io/echo</pre>
+</div></div>
 <div class="sect2">
 <h3 id="_events">Events</h3>
 <div class="paragraph"><p>The protocol implemented by <a href="#WR">WebRocket</a> defines two kinds of events:
@@ -139,6 +133,17 @@ is combined up of a number of parts:</p></div>
 <div class="sect1">
 <h2 id="client-events">Client Events (WebRocket &#8594; Cient)</h2>
 <div class="sectionbody">
+<div class="paragraph" id="client-custom-event-format"><p>All client event messages MUST have the following <a href="#JSON">JSON</a>-encoded
+payload format:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;eventName&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="c1">// ... parameters ...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div></div></div>
+<div class="paragraph"><p>Parameter keys SHOULD be defined as camel-cased strings, to keep
+compliance with the JavaScript coding style guidelines.</p></div>
 <div class="paragraph"><p>Two groups of <em>client</em> specific events can be distinguished:</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
@@ -157,21 +162,11 @@ is combined up of a number of parts:</p></div>
 <dd>
 <p>
                 User-defined events triggered by Backend Applications or other
-                connected Clients.
+                connected Clients. Custom events always contains the <span class="monospaced">channel</span>
+                parameter in its payload.
 </p>
 </dd>
 </dl></div>
-<div class="paragraph" id="client-custom-event-format"><p>All client event messages MUST have the following <a href="#JSON">JSON</a>-encoded
-payload format:</p></div>
-<div class="listingblock">
-<div class="content"><div class="highlight"><pre><span class="p">{</span>
-    <span class="s2">&quot;eventName&quot;</span><span class="o">:</span> <span class="p">{</span>
-        <span class="c1">// ... parameters ...</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</pre></div></div></div>
-<div class="paragraph"><p>Parameter keys SHOULD be defined as camel-cased strings, to keep
-compliance with the JavaScript coding style guidelines.</p></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -213,30 +208,13 @@ unique identifier of the current session.</p></div>
 <h3 id="client-succ-auth">Successfull authentication</h3>
 <div class="paragraph"><p>When connected Client has been successfully <a href="#server-auth">authenticated</a>
 the Server sends an event to confirm that situation. Message&#8217;s payload
-MUST contain name of the authenticated user and MAY contain additional
-information about the authenticated session.</p></div>
+ MAY contain additional information about the authenticated session.</p></div>
 <div class="listingblock">
 <div class="title">Format</div>
 <div class="content"><div class="highlight"><pre><span class="p">{</span>
-    <span class="s2">&quot;__authenticated&quot;</span><span class="o">:</span> <span class="p">{</span>
-        <span class="s2">&quot;user&quot;</span><span class="o">:</span> <span class="s2">&quot;joe&quot;</span>
-        <span class="c1">// ...</span>
-    <span class="p">}</span>
+    <span class="s2">&quot;__authenticated&quot;</span><span class="o">:</span> <span class="p">{}</span>
 <span class="p">}</span>
 </pre></div></div></div>
-<div class="hdlist"><div class="title">Parameters</div><table>
-<tr>
-<td class="hdlist1">
-<em>user</em> [<span class="monospaced">string</span>]
-<br>
-</td>
-<td class="hdlist2">
-<p style="margin-top: 0;">
-        Name of the authenticated user.
-</p>
-</td>
-</tr>
-</table></div>
 </div>
 <div class="sect2">
 <h3 id="client-confirm-sub">Confirmed subscription</h3>
@@ -358,7 +336,7 @@ subscriber.</p></div>
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-        The client&#8217;s session identifier.
+        The Client&#8217;s session identifier.
 </p>
 </td>
 </tr>
@@ -377,7 +355,7 @@ additional, custom information related to the subscriber.</p></div>
 <div class="listingblock">
 <div class="title">Format</div>
 <div class="content"><div class="highlight"><pre><span class="p">{</span>
-    <span class="s2">&quot;__heJoined&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;__memberJoined&quot;</span><span class="o">:</span> <span class="p">{</span>
         <span class="s2">&quot;sid&quot;</span><span class="o">:</span> <span class="s2">&quot;session-id&quot;</span><span class="p">,</span>
         <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
            <span class="c1">// ... custom information ...</span>
@@ -417,7 +395,7 @@ MUST contain the subscriber&#8217;s session identifier.</p></div>
 <div class="listingblock">
 <div class="title">Format</div>
 <div class="content"><div class="highlight"><pre><span class="p">{</span>
-    <span class="s2">&quot;__heLeft&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;__memberLeft&quot;</span><span class="o">:</span> <span class="p">{</span>
         <span class="s2">&quot;sid&quot;</span><span class="o">:</span> <span class="s2">&quot;session-id&quot;</span>
         <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
            <span class="c1">// ... custom information ...</span>
@@ -453,6 +431,47 @@ MUST contain the subscriber&#8217;s session identifier.</p></div>
 </div>
 </div>
 <div class="sect2">
+<h3 id="client-confirm-unsub">Confirmed unsubscription</h3>
+<div class="paragraph"><p>When connected Client has successfully <a href="#server-unsubscribe">unusubscribed</a>
+from the specified channel the Server sends an event to confirm that
+situation. Message&#8217;s payload MUST contain the name of the unsubscribed
+channel.</p></div>
+<div class="listingblock">
+<div class="title">Format</div>
+<div class="content"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;__unsubscribed&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;channel&quot;</span><span class="o">:</span> <span class="s2">&quot;chat&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div></div></div>
+<div class="hdlist"><div class="title">Parameters</div><table>
+<tr>
+<td class="hdlist1">
+<em>channel</em> [<span class="monospaced">string</span>]
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        The name of the unsubscribed channel.
+</p>
+</td>
+</tr>
+</table></div>
+</div>
+<div class="sect2">
+<h3 id="client-heartbeat">Heartbeat</h3>
+<div class="paragraph"><p>Server periodically sends a heartbeat message to ensure that the
+Client is still connected and ready to receive the message. The
+Client SHALL immedietely respond with the <a href="#server-pong">pong</a>
+message.</p></div>
+<div class="listingblock">
+<div class="title">Format</div>
+<div class="content"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;__ping&quot;</span><span class="o">:</span> <span class="p">{}</span>
+<span class="p">}</span>
+</pre></div></div></div>
+</div>
+<div class="sect2">
 <h3 id="client-closed">Closed connection confirmation</h3>
 <div class="paragraph"><p>When the Client <a href="#server-close">safely closes connection</a> the Server
 MUST sends an confirmation message to the client. The confirmation
@@ -473,7 +492,7 @@ message SHALL contain the identifier of the closed session.</p></div>
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-        The client&#8217;s session identifier.
+        The Client&#8217;s session identifier.
 </p>
 </td>
 </tr>
@@ -537,38 +556,27 @@ protocol as is implemented by the <a href="#client-events">client events</a>.</p
 the <a href="#client-events">client events</a> specification.</p></div>
 <div class="sect2">
 <h3 id="server-auth">Authentication</h3>
-<div class="paragraph"><p>When the Client wants to authenticate as a specified user, MUST send
-an authentication message with credentials. When authentication
-operation succeed an <a href="#client-succ-auth">authentication confirmation event</a> MUST be sent from the Server to this Client.</p></div>
+<div class="paragraph"><p>When the Client wants to authenticate using a single access token,
+MUST send an authentication message. When authentication operation
+succeed an <a href="#client-succ-auth">authentication confirmation event</a>
+MUST be sent from the Server to this Client.</p></div>
 <div class="listingblock">
 <div class="title">Format</div>
 <div class="content"><div class="highlight"><pre><span class="p">{</span>
     <span class="s2">&quot;auth&quot;</span><span class="o">:</span> <span class="p">{</span>
-        <span class="s2">&quot;user&quot;</span><span class="o">:</span> <span class="s2">&quot;joe&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;secret&quot;</span><span class="o">:</span> <span class="s2">&quot;secret&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;token&quot;</span><span class="o">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </pre></div></div></div>
 <div class="hdlist"><div class="title">Parameters</div><table>
 <tr>
 <td class="hdlist1">
-<em>user</em> [<span class="monospaced">string</span>]
+<em>token</em> [<span class="monospaced">string</span>]
 <br>
 </td>
 <td class="hdlist2">
 <p style="margin-top: 0;">
-        Name of the user we want to be authenticated as.
-</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-<em>secret</em> [<span class="monospaced">string</span>], optional
-<br>
-</td>
-<td class="hdlist2">
-<p style="margin-top: 0;">
-        The user&#8217;s secret key.
+        A <strong>Single Access Token</strong> obtained by the Backend Worker.
 </p>
 </td>
 </tr>
@@ -607,7 +615,7 @@ Server MUST notify a Client about successfull authentication
 <div class="sect2">
 <h3 id="server-subscribe">Subscribing a channel</h3>
 <div class="paragraph"><p>When the Client wants to subscribe to specified channel MUST send
-an subscription request message. When unsubscribe operation succeed
+an subscription request message. When subscribe operation succeed
 an <a href="#client-confirm-sub">subscription confirmation event</a> MUST be
 sent from the Server to this Client.</p></div>
 <div class="listingblock">
@@ -682,7 +690,7 @@ Server MUST notify a Client about successfull subscription
 </li>
 <li>
 <p>
-<a href="#err-invalid-channel-name">Invalid channel name</a>
+<a href="#err-channel-not-found">Channel not found</a>
 </p>
 </li>
 </ul></div>
@@ -690,7 +698,9 @@ Server MUST notify a Client about successfull subscription
 <div class="sect2">
 <h3 id="server-unsubscribe">Unsubscribing a channel</h3>
 <div class="paragraph"><p>When the client wants to unsubscribe specified channel, MUST send an
-unsubscription request message.</p></div>
+unsubscription request message. When unsubscribe operation succeed
+an <a href="#client-confirm-unsub">unsubscription confirmation event</a> MUST be
+sent from the Server to this Client.</p></div>
 <div class="listingblock">
 <div class="title">Format</div>
 <div class="content"><div class="highlight"><pre><span class="p">{</span>
@@ -757,7 +767,7 @@ If unsubscribing a Presence Channel, then all other subscribers
 </li>
 <li>
 <p>
-<a href="#err-invalid-channel-name">Invalid channel name</a>
+<a href="#err-channel-not-found">Channel not found</a>
 </p>
 </li>
 <li>
@@ -868,12 +878,7 @@ If the <em>trigger</em> option is specified, server SHOULD trigger
 </li>
 <li>
 <p>
-<a href="#err-invalid-channel-name">Invalid channel name</a>
-</p>
-</li>
-<li>
-<p>
-<a href="#err-invalid-event-name">Invalid event name</a>
+<a href="#err-channel-not-found">Channel not found</a>
 </p>
 </li>
 <li>
@@ -964,12 +969,52 @@ If all connected workers are overloaded or there is no worker connected,
 </li>
 <li>
 <p>
-<a href="#err-invalid-channel-name">Invalid channel name</a>
+<a href="#err-service-unavail">Service unavailable</a>
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="server-pong">Heartbeat</h3>
+<div class="paragraph"><p>When the Server requested <a href="#client-heartbeat">heartbeat</a> information
+then the Client responds with the <em>pong</em> message.</p></div>
+<div class="listingblock">
+<div class="title">Format</div>
+<div class="content"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s2">&quot;pong&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;sid&quot;</span><span class="o">:</span> <span class="s2">&quot;...&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div></div></div>
+<div class="hdlist"><div class="title">Parameters</div><table>
+<tr>
+<td class="hdlist1">
+<em>sid</em> [<span class="monospaced">string</span>]
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        The Client&#8217;s session identifier.
+</p>
+</td>
+</tr>
+</table></div>
+<div class="ulist"><div class="title">Sequence</div><ul>
+<li>
+<p>
+Server sends the <em>__ping</em> message
 </p>
 </li>
 <li>
 <p>
-<a href="#err-service-unavail">Service unavailable</a>
+Client MUST answer with the <em>pong</em> message as soon as possible
+</p>
+</li>
+</ul></div>
+<div class="ulist"><div class="title">Possible errors</div><ul>
+<li>
+<p>
+<a href="#err-bad-request">Bad request</a>
 </p>
 </li>
 </ul></div>
@@ -1029,12 +1074,9 @@ in the system or secret key is not matching the specified user.</p></div>
 due to lack of user rights. The request SHOULD NOT be repeated
 until authenticate for as a different user or grant current user
 with required permissions.</p></div>
-<div class="paragraph" id="err-invalid-channel-name"><div class="title"><span class="monospaced">451</span>: <em>Invalid channel name</em></div><p>Name of the channel specified in the payload is empty or contains
+<div class="paragraph"><div class="title"><span class="monospaced">451</span>: <em>Invalid channel name</em></div><p>Name of the channel specified in the payload is empty or contains
 invalid characters. The request SHOULD NOT be repeated without
 the channel name modifications.</p></div>
-<div class="paragraph" id="err-invalid-event-name"><div class="title"><span class="monospaced">452</span>: <em>Invalid event name</em></div><p>Name of the triggered event specified in the payload contains
-invalid characters. The request SHOULD NOT be repeated without
-the triggered event name modifications.</p></div>
 <div class="paragraph" id="err-not-subscribed"><div class="title"><span class="monospaced">453</span>: <em>Not subscribed</em></div><p>Channel is not subscribed by this client, so the operation on it
 can not be finished. The request SHOULD NOT be repeated.</p></div>
 <div class="paragraph" id="err-channel-not-found"><div class="title"><span class="monospaced">454</span>: <em>Channel not found</em></div><p>Specified channel does not exist, so the operation on it can not
@@ -1092,7 +1134,7 @@ workers. The request MAY be repeated after short time.</p></div>
 <div id="footer">
 <div id="footer-text">
 Version 0.1<br>
-Last updated 2011-12-15 16:19:02 UYST
+Last updated 2011-12-30 15:34:02 UYST
 </div>
 </div>
 </body>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="generator" content="AsciiDoc 8.6.6">
+<title>BWP - Backend Workers Protocol</title>
+<link rel="stylesheet" href="../style/asciidoc.css" type="text/css">
+<link rel="stylesheet" href="../style/pygments.css" type="text/css">
+<script type="text/javascript" src="./asciidoc.js"></script>
+<script type="text/javascript">
+/*<![CDATA[*/
+asciidoc.install();
+/*]]>*/
+</script>
+</head>
+<body class="article">
+<div id="header">
+<h1>BWP - Backend Workers Protocol</h1>
+<span id="author">Krzysztof Kowalik</span><br>
+<span id="email" class="monospaced">&lt;<a href="mailto:chris@nu7hat.ch">chris@nu7hat.ch</a>&gt;</span><br>
+<span id="revnumber">version 0.1,</span>
+<span id="revdate">December 2011</span>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>Latest Editor&#8217;s Draft</strong>: <a href="http://rfc.webrocket.io/draft/BWP.html">http://rfc.webrocket.io/draft/BWP.html</a>
+</p>
+</li>
+<li>
+<p>
+<strong>Status</strong>: Draft
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_abstract">Abstract</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The <strong>Backend Workers Protocol</strong> (<strong>BWP</strong>) is a transport layer protocol
+for exchanging messages between Server-side Web Applications or Workers
+and the Tasks Queue implemented by the <a href="#WR">WebRocket</a>.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_language">Language</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <a href="#RFC2119">RFC 2119</a>.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_goals">Goals</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The purpose of the protocol is to allow for bidirectional, evented
+communication between Server-side Web Applications and <a href="#WR">WebRocket</a>
+Tasks Queue over the <a href="#TCP">TCP protocol</a> using <a href="#ZEROMQ">ZeroMQ</a>
+components.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generalized_architecture">Generalized architecture</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The Backend Workers Protocol is a <a href="#PROTOBUF">Protocol Buffers</a> based
+protocol designed for rapid exchanging tasks with the Server-side Web
+Applications or Workers.</p></div>
+<div class="sect2">
+<h3 id="_components">Components</h3>
+<div class="paragraph"><p>Communication happens over the <a href="#TCP">TCP protocol</a> using
+<a href="#ZEROMQ">ZeroMQ</a> components. <a href="#WR">WebRocket</a>'s Tasks Queue serves data
+bidirectionaly using the <a href="#ZMQSOCKET"><em>ROUTER</em> socket</a>. The Client
+MUST operate using 2 sockets. Incoming tasks MUST be handled using
+the bidirectional <a href="#ZMQSOCKET"><em>DEALER</em> socket</a>. All other operations
+MUST be performed by the blocking <a href="#ZMQSOCKET"><em>REQ</em> socket</a>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_endpoint">Endpoint</h3>
+<div class="paragraph"><p>To simplify configuration for the end users, client libraries MAY use
+a particular URI to connect to the server:</p></div>
+<div class="literalblock">
+<div class="content monospaced">
+<pre>[scheme]://[host]:[port]/[vhost]?token=[token]</pre>
+</div></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<em>scheme</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        Will be <em>wr</em> for a normal connection and <em>wrs</em> for a secure.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>host</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        There is bound the server.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>port</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        The port to connect to.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>vhost</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        The virtual host to connect to.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>token</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        The Vhost access token.
+</p>
+</td>
+</tr>
+</table></div>
+<div class="literalblock">
+<div class="title">Example</div>
+<div class="content monospaced">
+<pre>wr://webrocket.io/echo?token=a1b2cc3...d4e5ff6</pre>
+</div></div>
+<div class="paragraph"><div class="title">Usage</div><p>The mask above should be translated into combination of the ZeroMQ
+<em>URL</em> and <em>identity</em>. The following URL should be used for particular
+configuration:</p></div>
+<div class="literalblock">
+<div class="content monospaced">
+<pre>tcp://[host]:[port]</pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="../images/icons/note.png" alt="Note">
+</td>
+<td class="content">The URL&#8217;s <em>scheme</em> in endpoint example SHALL be used only to
+        inform user about the protocol used to connect. It&#8217;s not used
+        further by connections while those depends only on <em>host</em> and
+        <em>port</em>.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>Rest of the scheme parameters should be used to compose identity
+of the client to handle <a href="#client-auth">authentication</a>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="client-auth">Authentication</h3>
+<div class="paragraph"><p>Not authenticated Clients MUST NOT be able to perform any operation
+on the Server. All Clients MUST be authenticated by their identity,
+which SHALL be composed from few elements and MUST have the following
+format:</p></div>
+<div class="literalblock">
+<div class="content monospaced">
+<pre>[type]:[vhost]:[access-key]:[client-id]</pre>
+</div></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<em>type</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        Type of the socket, MUST be <em>dlr</em> or <em>req</em>.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>vhost</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        VHost to connect to.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>access-key</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        The VHost access key.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>client-id</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        Unique id of the client. It should be generated by the client
+        using the UUID algorithm.
+</p>
+</td>
+</tr>
+</table></div>
+</div>
+<div class="sect2">
+<h3 id="_protocol">Protocol</h3>
+<div class="paragraph"><p>The <strong>Backend Worker Protocol</strong> implemented by <a href="#WR">WebRocket</a> MUST be based
+on <a href="#PROTOBUF">Protocol Buffers</a>.</p></div>
+<div class="listingblock">
+<div class="title">Buffer specification</div>
+<div class="content monospaced">
+<pre>message BackendMessage {
+        enum Command {
+                OK        = 1; // Server -&gt; REQ
+                ERROR     = 2; // Server -&gt; REQ
+                HEARTBEAT = 3; // DEALER -&gt; Server &amp; Server -&gt; DEALER
+                BROADCAST = 4; // REQ -&gt; Server &amp; Server -&gt; DEALER
+                SAT       = 5; // REQ -&gt; Server &amp; Server -&gt; REQ
+                OPENCHAN  = 6; // REQ -&gt; Server
+                CLOSECHAN = 7; // REQ -&gt; Server
+                QUIT      = 8; // DEALER -&gt; Server, Server -&gt; DEALER
+        }
+
+        required Command cmd = 1;
+
+        optional string channel = 2;
+        optional string trigger = 3;
+        optional string data = 5;
+}</pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="commands">Commands</h3>
+<div class="paragraph"><p>The protocol implemented by <a href="#WR">WebRocket</a> defines three kinds of commanfs:
+<a href="#dealer-commands"><em>DEALER socket specific</em></a>, <a href="#req-commands"><em>REQ socket specific</em></a> and <a href="#server-commands"><em>server specific</em></a>.</p></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="client-commands">REQ Commands (REQ &#8594; Server)</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>The <em>REQ</em> socket SHALL be used only to request/exchange informations
+from the Server.</p></div>
+<div class="ulist"><div class="title">Sequence</div><ul>
+<li>
+<p>
+Client requests particular imformation via a <em>REQ</em> socket
+</p>
+</li>
+<li>
+<p>
+If request is valid and no errors occured then Server returns
+  requested information.
+</p>
+</li>
+<li>
+<p>
+If error occuret then Server answers with the <em>ERROR</em> message.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>This is full list of the commands which MUST be supported by the
+Server and Clients.</p></div>
+<div class="sect2">
+<h3 id="client-sat">Getting a Single Access Token</h3>
+<div class="paragraph"><p>Request for a <strong>Single Access Token</strong> - token allowing the Frontend
+Client to authenticate with particular rights. Server SHALL respond
+with its verision of the <a href="#server-sat"><em>SAT</em></a> event.</p></div>
+<div class="literalblock">
+<div class="title">Message</div>
+<div class="content monospaced">
+<pre>cmd  = SAT
+data = "permission-regexp"</pre>
+</div></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<em>permission</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        A permission regular expression, matching allowed channels.
+</p>
+</td>
+</tr>
+</table></div>
+</div>
+<div class="sect2">
+<h3 id="client-openchan">Opening a new channel</h3>
+<div class="paragraph"><p>Requests to open a specified channel. The Server MAY respond with a
+<a href="#server-ok">simple confirmation</a> response or with an <a href="#server-error">error message</a>.</p></div>
+<div class="literalblock">
+<div class="title">Message</div>
+<div class="content monospaced">
+<pre>cmd     = OPENCHAN
+channel = "channel-name"</pre>
+</div></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<em>channel</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        A name of the channel to open.
+</p>
+</td>
+</tr>
+</table></div>
+</div>
+<div class="sect2">
+<h3 id="client-closechan">Closing a channel</h3>
+<div class="paragraph"><p>Requests to close a specified channel. The Server MAY respond with a
+<a href="#server-ok">simple confirmation</a> response or with an <a href="#server-error">error message</a>.</p></div>
+<div class="literalblock">
+<div class="title">Message</div>
+<div class="content monospaced">
+<pre>cmd     = CLOSECHAN
+channel = "channel-name"</pre>
+</div></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<em>channel</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        A name of the channel to close.
+</p>
+</td>
+</tr>
+</table></div>
+</div>
+<div class="sect2">
+<h3 id="client-trigger">Broadcastind data</h3>
+<div class="paragraph"><p>Requests to broadcast given data on the channel specified channel. The
+Server MAY respond with a <a href="#server-ok">simple confirmation</a> response
+or with an <a href="#server-error">error message</a>.</p></div>
+<div class="literalblock">
+<div class="title">Message</div>
+<div class="content monospaced">
+<pre>cmd     = BROADCAST
+channel = "channel-name"
+event   = "event-name"
+data    = "payload"</pre>
+</div></div>
+<div class="hdlist"><table>
+<tr>
+<td class="hdlist1">
+<em>channel</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        A name of the channel to broadcast to.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>event</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        A name of the event to trigger.
+</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+<em>data</em>
+<br>
+</td>
+<td class="hdlist2">
+<p style="margin-top: 0;">
+        JSON-encoded payload broadcasted on the channel.
+</p>
+</td>
+</tr>
+</table></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references">References</h2>
+<div class="sectionbody">
+<div class="ulist bibliography"><div class="title">Bibliography</div><ul>
+<li>
+<p>
+<a id="RFC2119"></a>[RFC2119] <a href="http://tools.ietf.org/html/rfc2119">Key words
+  for use in RFCs to Indicate Requirement</a> - S. Bradner, IETF
+</p>
+</li>
+<li>
+<p>
+<a id="TCP"></a>[TCP] <a href="http://www.ietf.org/rfc/rfc793.txt">Transmission
+  Control Protocol</a> - J. Postel, IETF
+</p>
+</li>
+<li>
+<p>
+<a id="JSON"></a>[JSON] <a href="http://www.ietf.org/rfc/rfc4627">JavaScript Object
+  Notation (JSON)</a> - D. Crockford, JSON.org
+</p>
+</li>
+<li>
+<p>
+<a id="WR"></a>[WR] <a href="http://webrocket.io/">WebRocket&#8217;s Home Page</a> - webrocket.io
+</p>
+</li>
+<li>
+<p>
+<a id="ZEROMQ"></a>[ZEROMQ] <a href="http://zeromq.org">ZeroMQ&#8217;s Home Page</a> - zeromq.org
+</p>
+</li>
+<li>
+<p>
+<a id="ZMQSOCKET"></a>[ZMQSOCKET] <a href="http://api.zeromq.org/2-1:zmq-socket">zmq_socket
+  Manual Page</a> - api.zeromq.org
+</p>
+</li>
+<li>
+<p>
+<a id="PROTOBUF"></a>[PROTOBUF] <a href="http://code.google.com/p/protobuf/">Protobuf
+  Project Page</a> - code.google.com
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr></div>
+<div id="footer">
+<div id="footer-text">
+Version 0.1<br>
+Last updated 2011-12-30 15:32:36 UYST
+</div>
+</div>
+</body>
+</html>
